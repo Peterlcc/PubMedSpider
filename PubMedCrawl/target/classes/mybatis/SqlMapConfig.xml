@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+ <!DOCTYPE configuration
+ PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+
+	<properties resource="mybatis/db.properties">
+		<!-- <property name="jdbc.username" value="root"/> -->
+	</properties>
+	<settings>
+	<!-- 延迟加载 -->
+	<setting name="lazyLoadingEnabled" value="true"></setting>
+	<setting name="aggressiveLazyLoading" value="false"></setting>
+	<!-- 二级缓存 -->
+	<setting name="cacheEnabled" value="false"/>
+	</settings>
+	<typeAliases>
+		<!-- 单个别名 -->
+		<!-- <typeAlias type="com.peter.bean.City" alias="city" /> -->
+		<!-- 批量定义：别名即是类名（大小写都可以） -->
+		<package name="com.peter.bean"/>
+	</typeAliases>
+	
+	<!-- <mappers>
+		<mapper resource="sqlmap/City.xml" />
+		 <mapper resource="mapper/CityMapper.xml" />
+		<mapper resource="mapper/AreaMapper.xml"/>
+		<mapper resource="mappers/CityMapper.xml"/>
+		<mapper resource="mappers/AreaMapper.xml"/>
+	</mappers> -->
+	
+</configuration>
