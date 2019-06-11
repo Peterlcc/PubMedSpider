@@ -1,16 +1,13 @@
-package com.peter.app;
+package com.peter.parse;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.springframework.context.ApplicationContext;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
-import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.HttpMethod;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
 import com.gargoylesoftware.htmlunit.WebClient;
@@ -21,44 +18,49 @@ import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.peter.bean.ArticleUrl;
-import com.peter.parse.ArticleParser;
-import com.peter.parse.ArticleUrlParser;
-import com.peter.parse.InfoParser;
+import com.peter.bean.Condition;
+import com.peter.mapper.ArticleUrlMapper;
+import com.peter.mapper.ConditionMapper;
 import com.peter.utils.CrawlConfig;
 
-public class App {
-	private static ApplicationContext context = null;
-	private static List<String> userAgentList = null;
-	private static List<String> keywords=null;
-	private static String domain = "https://www.ncbi.nlm.nih.gov";
+public class ArticleUrlParser extends InfoParser {
+	private final String domain = "https://www.ncbi.nlm.nih.gov";
+	final String base = "https://www.ncbi.nlm.nih.gov/pubmed/?term=";
 
-	private static void init() {
+	private List<Condition> conditions = null;
+	private List<String> userAgentList = null;
+	private ArticleUrlMapper articleUrlMapper = null;
+
+	private void init() {
 		context = CrawlConfig.getApplicationContext();
 		userAgentList = CrawlConfig.getUserAgent();
-		keywords=new ArrayList<String>();
-		keywords.add("lncrna");
+		ConditionMapper conditionMapper = context.getBean(ConditionMapper.class);
+		conditions = conditionMapper.selectAll();
+		articleUrlMapper = context.getBean(ArticleUrlMapper.class);
 	}
 
-	public static void main(String[] args) throws FileNotFoundException, IOException {
+	public ArticleUrlParser(ApplicationContext context) {
+		super(context);
 		init();
-		
-		//爬取所有详情页连接
-		InfoParser articleurlInfoParser=new ArticleUrlParser(context);
-		articleurlInfoParser.parser();
-		
-		//爬取所有文章详情：标题、摘要、pmid
-		/*InfoParser articleInfoParser=new ArticleParser(context);
-		articleInfoParser.parser();*/
-		
+	}
+
+	@Override
+	public void parser() {
+		for (Condition condition : conditions) {
+			String keyword = condition.getItem();
+			try {
+				getAllPagesFromCondition(keyword);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
+		}
 
 	}
 
-	private static void getAllDetailUrl() throws FailingHttpStatusCodeException, IOException {
-
-		final String base = "https://www.ncbi.nlm.nih.gov/pubmed/?term=";
-		String keyword = keywords.get(0);
+	private void getAllPagesFromCondition(String keyword) throws IOException {
 		String url = base + keyword;
-		
+
 		final WebClient webClient = new WebClient(BrowserVersion.CHROME);// 新建一个模拟谷歌Chrome浏览器的浏览器客户端对象
 
 		webClient.getOptions().setThrowExceptionOnScriptError(false);// 当JS执行出错的时候是否抛出异常, 这里选择不需要
@@ -70,40 +72,48 @@ public class App {
 		webClient.getOptions().setDoNotTrackEnabled(false);
 		webClient.setAjaxController(new NicelyResynchronizingAjaxController());// 很重要，设置支持AJAX
 
-		WebRequest mainRequest = new WebRequest(new URL(url), HttpMethod.GET);
+		URL requestUrl = null;
+		requestUrl = new URL(url);
+
+		WebRequest mainRequest = new WebRequest(requestUrl, HttpMethod.GET);
 		mainRequest.setAdditionalHeader("user-agent", userAgentList.get(RandomUtils.nextInt(0, userAgentList.size())));
-		HtmlPage page = webClient.getPage(mainRequest);
+		HtmlPage page = null;
+		page = webClient.getPage(mainRequest);
+
 		webClient.waitForBackgroundJavaScript(3000);
 
-		getAllDetails(page,keyword);
+		getAllDetails(page, keyword);
 
 		HtmlInput pageMsg = page.querySelector("#pageno2");
 		String lastPage = pageMsg.getAttribute("last");
 		int last = Integer.parseInt(lastPage);
 		HtmlElement nextBtn = page.querySelector("div.title_and_pager.bottom  a.active.page_link.next");
-		System.out.println("last:"+last+"   nextbtn:"+nextBtn.asXml());
+
 		for (int i = 0; i < last; i++) {
-			HtmlPage nextPage = nextBtn.click();
-			getAllDetails(nextPage,keyword);
+			System.out.println("关键字：" + keyword + "--第" + i + "页：");
+			HtmlPage nextPage = null;
+			nextPage = nextBtn.click();
+			getAllDetails(nextPage, keyword);
 		}
 
 		webClient.close();
-		System.out.println("ok");
-
+		System.out.println("爬取结束");
 	}
 
-	private static void getAllDetails(HtmlPage page,String keyword) {
+	private void getAllDetails(HtmlPage page, String keyword) {
 		DomNodeList<DomNode> allDetails = page.querySelectorAll("#maincontent > div > div > div > div.rslt > p > a");
-		// ArticleUrlMapper articleUrlMapper = context.getBean(ArticleUrlMapper.class);
 		ArticleUrl articleUrl = new ArticleUrl();
-
+		int count = 0;
 		for (DomNode detail : allDetails) {
 			HtmlElement aElement = (HtmlElement) detail;
 			String href = aElement.getAttribute("href");
 			articleUrl.setId(null);
 			articleUrl.setKeyword(keyword);
 			articleUrl.setUrl(domain + href);
-			System.out.println(articleUrl);
+			articleUrlMapper.insertSelective(articleUrl);
+			count++;
 		}
+		System.out.println("共"+count+"个");
 	}
+
 }

@@ -7,18 +7,26 @@ public class Article {
 
     private String pmid;
 
+    private String url;
+
+    private String keyword;
+
     private String summary;
 
-    public Article(Integer id, String title, String pmid) {
+    public Article(Integer id, String title, String pmid, String url, String keyword) {
         this.id = id;
         this.title = title;
         this.pmid = pmid;
+        this.url = url;
+        this.keyword = keyword;
     }
 
-    public Article(Integer id, String title, String pmid, String summary) {
+    public Article(Integer id, String title, String pmid, String url, String keyword, String summary) {
         this.id = id;
         this.title = title;
         this.pmid = pmid;
+        this.url = url;
+        this.keyword = keyword;
         this.summary = summary;
     }
 
@@ -50,6 +58,22 @@ public class Article {
         this.pmid = pmid == null ? null : pmid.trim();
     }
 
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url == null ? null : url.trim();
+    }
+
+    public String getKeyword() {
+        return keyword;
+    }
+
+    public void setKeyword(String keyword) {
+        this.keyword = keyword == null ? null : keyword.trim();
+    }
+
     public String getSummary() {
         return summary;
     }
@@ -57,4 +81,11 @@ public class Article {
     public void setSummary(String summary) {
         this.summary = summary == null ? null : summary.trim();
     }
+
+	@Override
+	public String toString() {
+		return "Article [id=" + id + ", title=" + title + ", pmid=" + pmid + ", url=" + url + ", keyword=" + keyword
+				+ ", summary=" + summary + "]";
+	}
+    
 }
