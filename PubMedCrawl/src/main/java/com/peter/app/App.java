@@ -43,12 +43,12 @@ public class App {
 		init();
 		
 		//爬取所有详情页连接
-		InfoParser articleurlInfoParser=new ArticleUrlParser(context);
-		articleurlInfoParser.parser();
+		/*InfoParser articleurlInfoParser=new ArticleUrlParser(context);
+		articleurlInfoParser.parser();*/
 		
 		//爬取所有文章详情：标题、摘要、pmid
-		/*InfoParser articleInfoParser=new ArticleParser(context);
-		articleInfoParser.parser();*/
+		InfoParser articleInfoParser=new ArticleParser(context);
+		articleInfoParser.parser();
 		
 
 	}

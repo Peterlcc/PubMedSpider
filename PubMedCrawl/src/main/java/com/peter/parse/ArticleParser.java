@@ -1,5 +1,7 @@
 package com.peter.parse;
 
+import java.util.concurrent.TimeUnit;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -50,7 +52,6 @@ public class ArticleParser extends InfoParser {
 		
 		Element pmidElement = doc.selectFirst("#maincontent > div > div.rprt_all > div > div.aux > div> dl > dd");
 		article.setPmid(pmidElement.text());
-		articleMapper.insertSelective(article);
 		System.out.println("第"+articleUrl.getId()+"个详情页");
 	}
 
